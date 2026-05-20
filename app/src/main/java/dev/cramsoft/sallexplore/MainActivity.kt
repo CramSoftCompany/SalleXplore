@@ -41,8 +41,6 @@ import com.google.mlkit.vision.common.InputImage
 import io.github.sceneview.ar.ARSceneView
 import io.github.sceneview.ar.arcore.createAnchorOrNull
 import io.github.sceneview.ar.arcore.getUpdatedPlanes
-import io.github.sceneview.ar.node.AnchorNode
-import io.github.sceneview.node.ModelNode
 import io.github.sceneview.rememberEngine
 import io.github.sceneview.rememberModelInstance
 import io.github.sceneview.rememberModelLoader
@@ -66,7 +64,6 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.QrCodeScanner
