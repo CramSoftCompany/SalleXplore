@@ -5,7 +5,7 @@ plugins {
 
 android {
     namespace = "dev.cramsoft.sallexplore"
-    compileSdk = 35 // ✅ simplificado, el bloque release(36) causa errores en AGP estable
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "dev.cramsoft.sallexplore"
@@ -26,7 +26,6 @@ android {
         }
     }
 
-    // ✅ UN solo bloque compileOptions con VERSION_21
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
@@ -37,11 +36,13 @@ android {
     }
 
     androidResources {
+        // Evita que las texturas se corrompan al compilar
         noCompress.add("glb")
+        noCompress.add("ktx")
+        noCompress.add("filamat")
     }
 }
 
-// ✅ Reemplaza kotlinOptions — va FUERA del bloque android {}
 kotlin {
     compilerOptions {
         jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
@@ -64,7 +65,20 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
-    // Reemplaza las dos líneas de sceneview
-    implementation("io.github.sceneview:sceneview:2.2.1")
-    implementation("io.github.sceneview:arsceneview:2.2.1")
+
+    // ✅ Librerías de Sceneview estables con AndroidView
+    implementation("io.github.sceneview:sceneview:4.10.0")
+    implementation("io.github.sceneview:arsceneview:4.10.0")
+    implementation("androidx.navigation:navigation-compose:2.7.7")
+
+    // CameraX (para el preview de la cámara)
+    implementation("androidx.camera:camera-camera2:1.3.4")
+    implementation("androidx.camera:camera-lifecycle:1.3.4")
+    implementation("androidx.camera:camera-view:1.3.4")
+
+// ML Kit Barcode (lectura QR nativa, sin internet)
+    implementation("com.google.mlkit:barcode-scanning:17.3.0")
+
+    implementation("androidx.compose.material:material-icons-extended")
+
 }
