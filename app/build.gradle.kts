@@ -5,19 +5,14 @@ plugins {
 
 android {
     namespace = "dev.cramsoft.sallexplore"
-    compileSdk {
-        version = release(36) {
-            minorApiLevel = 1
-        }
-    }
+    compileSdk = 35 // ✅ simplificado, el bloque release(36) causa errores en AGP estable
 
     defaultConfig {
         applicationId = "dev.cramsoft.sallexplore"
-        minSdk = 34
-        targetSdk = 36
+        minSdk = 26
+        targetSdk = 35
         versionCode = 1
         versionName = "1.0"
-
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
@@ -30,12 +25,26 @@ android {
             )
         }
     }
+
+    // ✅ UN solo bloque compileOptions con VERSION_21
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
+
     buildFeatures {
         compose = true
+    }
+
+    androidResources {
+        noCompress.add("glb")
+    }
+}
+
+// ✅ Reemplaza kotlinOptions — va FUERA del bloque android {}
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
     }
 }
 
@@ -55,7 +64,7 @@ dependencies {
     androidTestImplementation(libs.androidx.junit)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
-    //add
-    implementation("io.github.sceneview:arsceneview:4.10.0")
-
+    // Reemplaza las dos líneas de sceneview
+    implementation("io.github.sceneview:sceneview:2.2.1")
+    implementation("io.github.sceneview:arsceneview:2.2.1")
 }
