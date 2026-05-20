@@ -58,15 +58,30 @@ import android.view.PixelCopy
 import android.view.SurfaceView
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.painterResource
+import androidx.core.view.WindowCompat
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        WindowCompat.setDecorFitsSystemWindows(window, false)
         setContent {
             MaterialTheme {
                 val navController = rememberNavController()
@@ -81,7 +96,7 @@ class MainActivity : ComponentActivity() {
                     composable("ar/{personajeId}") { backStackEntry ->
                         val personajeId = backStackEntry.arguments
                             ?.getString("personajeId")
-                            ?: "juan_ok2"
+                            ?: "San_Juan_Bautista"
                         PantallaAR(personajeId = personajeId)
                     }
                 }
@@ -95,36 +110,105 @@ class MainActivity : ComponentActivity() {
 // ======================================================
 @Composable
 fun PantallaBienvenida(navController: NavController) {
-    val colorLaSalle = Color(0xFF0033A0)
+    val azul = Color(0xFF0033A0)
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.White)
-            .padding(24.dp),
+            .padding(horizontal = 28.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.SpaceBetween
     ) {
-        Text(
-            "SalleXplore",
-            fontSize = 42.sp,
-            fontWeight = FontWeight.Bold,
-            color = colorLaSalle
-        )
-        Spacer(modifier = Modifier.height(16.dp))
-        Text(
-            text = "Escanea el código QR del personaje para comenzar.",
-            fontSize = 18.sp,
-            color = Color.DarkGray,
-            textAlign = TextAlign.Center
-        )
-        Spacer(modifier = Modifier.height(40.dp))
+
+        Spacer(modifier = Modifier.height(60.dp))
+
+        // ── Bloque superior: logo + título ─────────────────
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+
+            // Espacio reservado para el logo
+            // Reemplaza el Box por:
+            Image(
+                painter = painterResource(id = R.drawable.logo_salle),
+                contentDescription = "Logo",
+                modifier = Modifier
+                    .size(230.dp),
+                contentScale = ContentScale.Fit
+            )
+            /*Box(
+                modifier = Modifier
+                    .size(110.dp)
+                    .background(azul.copy(alpha = 0.08f), RoundedCornerShape(20.dp))
+                    .border(1.5.dp, azul.copy(alpha = 0.25f), RoundedCornerShape(20.dp)),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text  = "LOGO",
+                    color = azul.copy(alpha = 0.4f),
+                    fontWeight = FontWeight.Bold,
+                    fontSize   = 18.sp
+                )
+            }
+
+             */
+
+            Spacer(modifier = Modifier.height(20.dp))
+ /*
+            Text(
+                text       = "SalleXplore",
+                fontSize   = 40.sp,
+                fontWeight = FontWeight.Bold,
+                color      = azul
+            )
+
+  */
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            Text(
+                text      = "Escanea y conversa con un\npersonaje de La Salle",
+                fontSize  = 16.sp,
+                color     = Color.DarkGray,
+                textAlign = TextAlign.Center
+            )
+        }
+
+        // ── Botón QR ───────────────────────────────────────
         Button(
-            // ← ahora va a la pantalla QR, no directo a AR
             onClick = { navController.navigate("qr") },
-            modifier = Modifier.fillMaxWidth().height(56.dp),
-            colors = ButtonDefaults.buttonColors(containerColor = colorLaSalle)
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp),
+            shape  = RoundedCornerShape(14.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = azul)
         ) {
-            Text("Escanear QR", color = Color.White, fontSize = 18.sp)
+            Icon(
+                imageVector         = Icons.Default.QrCodeScanner,
+                contentDescription  = null,
+                tint                = Color.White,
+                modifier            = Modifier.size(22.dp)
+            )
+            Spacer(modifier = Modifier.width(10.dp))
+            Text("Escanear QR", fontSize = 17.sp, color = Color.White)
+        }
+
+        // ── Footer ─────────────────────────────────────────
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier.padding(bottom = 24.dp)
+        ) {
+            Divider(color = Color.LightGray, thickness = 0.8.dp)
+            Spacer(modifier = Modifier.height(10.dp))
+            Text(
+                text     = "Desarrollado por Cramsoft Company",
+                fontSize = 11.sp,
+                color    = Color.Gray
+            )
+            Text(
+                text     = "© Derechos reservados 2026",
+                fontSize = 11.sp,
+                color    = Color.Gray
+            )
         }
     }
 }
@@ -135,25 +219,24 @@ fun PantallaBienvenida(navController: NavController) {
 @OptIn(ExperimentalGetImage::class)
 @Composable
 fun PantallaQR(navController: NavController) {
+    val context       = LocalContext.current
     val lifecycleOwner = LocalLifecycleOwner.current
-    // AtomicBoolean para evitar navegaciones dobles si el scanner dispara varias veces
-    val yaEscaneado = remember { AtomicBoolean(false) }
+    val yaEscaneado   = remember { AtomicBoolean(false) }
 
     Box(modifier = Modifier.fillMaxSize()) {
 
-        // ── Preview de cámara ──────────────────────────────
+        // ── Preview cámara ─────────────────────────────────
         AndroidView(
             modifier = Modifier.fillMaxSize(),
-            factory = { ctx ->
+            factory  = { ctx ->
                 val previewView = PreviewView(ctx)
-                val executor = ContextCompat.getMainExecutor(ctx)
+                val executor    = ContextCompat.getMainExecutor(ctx)
 
                 ProcessCameraProvider.getInstance(ctx).addListener({
-                    val cameraProvider = ProcessCameraProvider.getInstance(ctx).get()
+                    val provider = ProcessCameraProvider.getInstance(ctx).get()
 
-                    val preview = Preview.Builder().build().also {
-                        it.setSurfaceProvider(previewView.surfaceProvider)
-                    }
+                    val preview = Preview.Builder().build()
+                        .also { it.setSurfaceProvider(previewView.surfaceProvider) }
 
                     val scanner = BarcodeScanning.getClient(
                         BarcodeScannerOptions.Builder()
@@ -166,20 +249,30 @@ fun PantallaQR(navController: NavController) {
                         .build()
 
                     analysis.setAnalyzer(executor) { imageProxy ->
-                        val mediaImage = imageProxy.image
-                        if (mediaImage != null && !yaEscaneado.get()) {
-                            val imagen = InputImage.fromMediaImage(
-                                mediaImage,
-                                imageProxy.imageInfo.rotationDegrees
+                        val media = imageProxy.image
+                        if (media != null && !yaEscaneado.get()) {
+                            val img = InputImage.fromMediaImage(
+                                media, imageProxy.imageInfo.rotationDegrees
                             )
-                            scanner.process(imagen)
+                            scanner.process(img)
                                 .addOnSuccessListener { codigos ->
                                     codigos.firstOrNull()?.rawValue?.let { valor ->
-                                        // compareAndSet garantiza que solo naveguemos una vez
                                         if (yaEscaneado.compareAndSet(false, true)) {
-                                            navController.navigate("ar/$valor") {
-                                                // Al volver con Back desde AR, regresa a Bienvenida
-                                                popUpTo("qr") { inclusive = true }
+
+                                            // ✅ Valida que el ID exista
+                                            if (PERSONAJES_INFO.containsKey(valor)) {
+                                                navController.navigate("ar/$valor") {
+                                                    popUpTo("qr") { inclusive = true }
+                                                }
+                                            } else {
+                                                Toast.makeText(
+                                                    ctx,
+                                                    "Este QR no pertenece a ningún personaje. " +
+                                                            "Escanea el QR de un personaje lasallista.",
+                                                    Toast.LENGTH_LONG
+                                                ).show()
+                                                // Permite volver a escanear
+                                                yaEscaneado.set(false)
                                             }
                                         }
                                     }
@@ -190,8 +283,8 @@ fun PantallaQR(navController: NavController) {
                         }
                     }
 
-                    cameraProvider.unbindAll()
-                    cameraProvider.bindToLifecycle(
+                    provider.unbindAll()
+                    provider.bindToLifecycle(
                         lifecycleOwner,
                         CameraSelector.DEFAULT_BACK_CAMERA,
                         preview,
@@ -203,72 +296,86 @@ fun PantallaQR(navController: NavController) {
             }
         )
 
-        // ── Overlay: marco + instrucción ───────────────────
+        // ── Overlay: marco + texto ─────────────────────────
         Column(
             modifier = Modifier.fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center
         ) {
-            // Marco visual tipo viewfinder
             Box(
                 modifier = Modifier
                     .size(260.dp)
-                    .border(
-                        width = 3.dp,
-                        color = Color(0xFF0033A0),
-                        shape = RoundedCornerShape(16.dp)
-                    )
+                    .border(3.dp, Color(0xFF0033A0), RoundedCornerShape(16.dp))
             )
-            Spacer(modifier = Modifier.height(28.dp))
+            Spacer(modifier = Modifier.height(24.dp))
             Text(
-                text = "Apunta al código QR del personaje",
-                color = Color.White,
-                fontSize = 16.sp,
+                text    = "Apunta al código QR del personaje",
+                color   = Color.White,
+                fontSize = 15.sp,
                 textAlign = TextAlign.Center,
                 modifier = Modifier
-                    .background(
-                        color = Color.Black.copy(alpha = 0.55f),
-                        shape = RoundedCornerShape(8.dp)
-                    )
+                    .background(Color.Black.copy(alpha = 0.55f), RoundedCornerShape(8.dp))
                     .padding(horizontal = 16.dp, vertical = 8.dp)
+            )
+        }
+
+        // ── Botón atrás (esquina superior izquierda) ───────
+        IconButton(
+            onClick  = { navController.popBackStack() },
+            modifier = Modifier
+                .align(Alignment.TopStart)
+                .statusBarsPadding()
+                .padding(12.dp)
+                .background(Color.Black.copy(alpha = 0.50f), CircleShape)
+                .size(42.dp)
+        ) {
+            Icon(
+                imageVector        = Icons.Default.ArrowBack,
+                contentDescription = "Volver",
+                tint               = Color.White
             )
         }
     }
 }
 
 // ======================================================
-// PANTALLA AR  — ahora recibe el ID del personaje
-// ======================================================
-// ======================================================
-// PANTALLA AR — con zoom, triple toque y captura
-// ======================================================
-// ======================================================
 // PANTALLA AR — agrega LocalView para la captura
 // ======================================================
 @Composable
 fun PantallaAR(personajeId: String) {
-    val context      = LocalContext.current
-    val rootView     = LocalView.current          // ← nuevo: referencia al árbol de vistas
-    val audioManager = remember { AudioManager(context) }
+    val context       = LocalContext.current
+    val rootView      = LocalView.current
+    val audioManager  = remember { AudioManager(context) }
 
-    val engine       = rememberEngine()
-    val modelLoader  = rememberModelLoader(engine)
+    val engine        = rememberEngine()
+    val modelLoader   = rememberModelLoader(engine)
 
-    var anchor       by remember { mutableStateOf<Anchor?>(null) }
-    var mostrarChat  by remember { mutableStateOf(false) }
-    val modelInstance = rememberModelInstance(modelLoader, "models/$personajeId.glb")
-    val tapTimes      = remember { mutableListOf<Long>() }
+    var anchor        by remember { mutableStateOf<Anchor?>(null) }
+    var mostrarChat   by remember { mutableStateOf(false) }
+    var hintVisible   by remember { mutableStateOf(false) }
+    var mostrarFrase by remember { mutableStateOf(true) }
+
+    val modelInstance  = rememberModelInstance(modelLoader, "models/$personajeId.glb")
+    val tapTimes       = remember { mutableListOf<Long>() }
+    val personajeInfo  = PERSONAJES_INFO[personajeId]   // nunca null: QR ya validado
+
+    // Muestra el hint "toca 3 veces" durante 4 s al colocar el modelo
+    LaunchedEffect(anchor) {
+        if (anchor != null) {
+            hintVisible = true
+            kotlinx.coroutines.delay(4000)
+            hintVisible = false
+        }
+    }
 
     DisposableEffect(Unit) {
         audioManager.playAmbiente()
-        onDispose {
-            audioManager.stopAmbiente()
-            audioManager.release()
-        }
+        onDispose { audioManager.stopAmbiente(); audioManager.release() }
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
 
+        // ── Vista AR ───────────────────────────────────────
         ARSceneView(
             modifier      = Modifier.fillMaxSize(),
             engine        = engine,
@@ -314,36 +421,134 @@ fun PantallaAR(personajeId: String) {
             }
         }
 
-        FloatingActionButton(
-            // ← pasa rootView en lugar de solo context
-            onClick = { capturarPantalla(context, rootView, audioManager) },
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(24.dp),
-            containerColor = Color(0xFF0033A0)
-        ) {
-            Icon(
-                imageVector = Icons.Default.CameraAlt,
-                contentDescription = "Capturar foto",
-                tint = Color.White
-            )
+        // ── Tarjeta de info del personaje (siempre visible) ──
+        if (personajeInfo != null) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.TopCenter)
+                    .statusBarsPadding()
+                    .padding(12.dp),
+                shape  = RoundedCornerShape(14.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color.Black.copy(alpha = 0.68f)
+                )
+            ) {
+                Column(modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp)) {
+                    Text(
+                        text       = personajeInfo.nombre,
+                        color      = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        fontSize   = 14.sp
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text     = personajeInfo.descripcionCorta,
+                        color    = Color.White.copy(alpha = 0.72f),
+                        fontSize = 11.sp
+                    )
+                }
+            }
         }
 
-        if (mostrarChat) {
-            Box(
+        // ── "Buscando superficie…" mientras no hay modelo ──
+        if (anchor == null) {
+            Row(
                 modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .fillMaxWidth()
-                    .background(Color.Black.copy(alpha = 0.6f))
-                    .padding(24.dp)
+                    .align(Alignment.Center)
+                    .background(Color.Black.copy(alpha = 0.60f), RoundedCornerShape(12.dp))
+                    .padding(horizontal = 18.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                CircularProgressIndicator(
+                    modifier    = Modifier.size(16.dp),
+                    color       = Color(0xFF0033A0),
+                    strokeWidth = 2.dp
+                )
+                Spacer(modifier = Modifier.width(10.dp))
+                Text("Buscando superficie plana…", color = Color.White, fontSize = 13.sp)
+            }
+        }
+
+        // ── Frase del personaje flotando ──
+        if (
+            anchor != null &&
+            !hintVisible &&
+            !mostrarChat &&
+            personajeInfo != null &&
+            mostrarFrase
+        ) {
+            Card(
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .padding(horizontal = 32.dp)
+                    .offset(y = (-200).dp) // más arriba
+                    .pointerInput(Unit) {
+                        detectTapGestures(
+                            onDoubleTap = {
+                                mostrarFrase = false
+                            }
+                        )
+                    },
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color(0xFF0033A0).copy(alpha = 0.82f)
+                )
             ) {
                 Text(
-                    text = "💬 Chat activado para: $personajeId",
+                    text = personajeInfo.frase,
                     color = Color.White,
-                    fontSize = 16.sp,
-                    modifier = Modifier.align(Alignment.Center)
+                    fontSize = 13.sp,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp)
                 )
             }
+        }
+
+        // ── Hint: "Toca 3 veces…" (aparece 4 s al colocar modelo) ──
+        AnimatedVisibility(
+            visible = hintVisible,
+            enter   = fadeIn(),
+            exit    = fadeOut(),
+            modifier = Modifier.align(Alignment.Center)
+        ) {
+            Box(
+                modifier = Modifier
+                    .background(Color.Black.copy(alpha = 0.58f), RoundedCornerShape(10.dp))
+                    .padding(horizontal = 18.dp, vertical = 10.dp)
+            ) {
+                Text(
+                    "👆 Toca 3 veces al personaje\npara hablar con él",
+                    color     = Color.White,
+                    fontSize  = 13.sp,
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+
+
+
+
+        // ── Botón foto (oculto cuando el chat está abierto) ──
+        if (!mostrarChat) {
+            FloatingActionButton(
+                onClick = { capturarPantalla(context, rootView, audioManager) },
+                modifier = Modifier
+                    .align(Alignment.BottomEnd)
+                    .padding(24.dp),
+                containerColor = Color(0xFF0033A0)
+            ) {
+                Icon(Icons.Default.CameraAlt, contentDescription = "Foto", tint = Color.White)
+            }
+        }
+
+        // ── Chat overlay ───────────────────────────────────
+        if (mostrarChat) {
+            ChatTikTokOverlay(
+                personajeId   = personajeId,
+                personajeInfo = personajeInfo,
+                onCerrar      = { mostrarChat = false }
+            )
         }
     }
 }
